@@ -59,7 +59,7 @@ app.post('/api/ai', async (req,res)=>{
     const contextText = JSON.stringify(studyContext).slice(0,16000);
 
     const response = await client.responses.create({
-      model: process.env.OPENAI_MODEL || 'gpt-5.6-luna',
+      model: 'openrouter/free',
       instructions: SYSTEM_PROMPT,
       input: [
         ...recent,
