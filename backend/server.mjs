@@ -12,6 +12,13 @@ if (!process.env.OPENAI_API_KEY) {
   console.warn('OPENAI_API_KEY is not set.');
 }
 
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type');
+  if (req.method === 'OPTIONS') return res.sendStatus(204);
+  next();
+});
 app.use(express.json({limit:'256kb'}));
 
 const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
