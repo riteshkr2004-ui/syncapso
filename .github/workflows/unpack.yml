@@ -1,0 +1,31 @@
+name: Unpack SYNCAPSO
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  unpack:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Unzip SYNCAPSO project
+        run: |
+          unzip -o SYNCAPSO_Android_AI_v1.zip -d syncapso_temp
+          cp -r syncapso_temp/. syncapso_temp_contents
+          find syncapso_temp -mindepth 1 -maxdepth 1 -exec cp -r {} . \;
+          rm -rf syncapso_temp
+          rm -f SYNCAPSO_Android_AI_v1.zip
+
+      - name: Commit extracted project
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "Add SYNCAPSO Android project" || exit 0
+          git push
