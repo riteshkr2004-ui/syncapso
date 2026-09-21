@@ -21,8 +21,10 @@ app.use((req, res, next) => {
 });
 app.use(express.json({limit:'256kb'}));
 
-const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-
+const client = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+  baseURL: 'https://openrouter.ai/api/v1'
+});
 const SYSTEM_PROMPT = `
 You are SYNCAPSO AI Tutor, a focused NEET preparation assistant.
 Help students with Physics, Chemistry and Biology concepts, numericals,
