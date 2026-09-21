@@ -1,0 +1,956 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SYNCAPSO — Study Command Center</title>
+<style>
+:root{--bg:#090b10;--panel:#11151d;--panel2:#151a23;--line:#242b38;--text:#f4f6fb;--muted:#8f98aa;--accent:#8b7cff;--accent2:#55d6be;--warn:#ffbd69;--danger:#ff7185;--shadow:0 20px 60px #0008}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:radial-gradient(circle at 20% 0,#1b1835 0,#090b10 35%),var(--bg);color:var(--text);font:14px Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,sans-serif;min-height:100vh}
+button,input,select{font:inherit}button{cursor:pointer;border:0;color:inherit}.app{display:flex;min-height:100vh}.side{width:250px;border-right:1px solid var(--line);background:#0c0f15d9;backdrop-filter:blur(18px);padding:22px 14px;position:sticky;top:0;height:100vh;z-index:5}.brand{display:flex;gap:11px;align-items:center;padding:8px 10px 24px;font-weight:800;font-size:18px}.logo{width:36px;height:36px;border-radius:12px;background:linear-gradient(135deg,var(--accent),#54d6ff);display:grid;place-items:center;font-weight:900;box-shadow:0 8px 30px #7b6dff44}.nav{display:grid;gap:5px}.nav button{background:transparent;text-align:left;padding:12px 13px;border-radius:11px;color:var(--muted);transition:.25s}.nav button:hover,.nav button.active{background:#ffffff0a;color:#fff;transform:translateX(2px)}.side-note{position:absolute;bottom:20px;left:20px;right:20px;color:var(--muted);font-size:11px;line-height:1.5}.main{flex:1;max-width:1500px;margin:auto;padding:28px 32px 70px}.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:25px}.eyebrow{color:var(--accent2);font-size:12px;font-weight:700;letter-spacing:.12em;text-transform:uppercase}.title{font-size:31px;font-weight:800;letter-spacing:-.04em;margin:5px 0}.sub{color:var(--muted)}.clock{font-variant-numeric:tabular-nums;color:#cbd2df}.page{display:none;animation:in .35s ease}.page.show{display:block}@keyframes in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.grid{display:grid;gap:14px}.g4{grid-template-columns:repeat(4,1fr)}.g3{grid-template-columns:repeat(3,1fr)}.g2{grid-template-columns:repeat(2,1fr)}.card{background:linear-gradient(145deg,#151a23,#10141c);border:1px solid var(--line);border-radius:18px;padding:18px;box-shadow:var(--shadow);transition:.25s}.card:hover{border-color:#343d4d;transform:translateY(-2px)}.metric{font-size:28px;font-weight:800;margin:8px 0}.metric small{font-size:12px;color:var(--muted);font-weight:500}.label{color:var(--muted);font-size:12px}.progress{height:7px;background:#252b35;border-radius:99px;overflow:hidden;margin-top:12px}.progress i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:99px;transition:width .6s ease}.section{display:flex;justify-content:space-between;align-items:center;margin:27px 0 12px}.section h2{font-size:17px;margin:0}.btn{padding:9px 13px;border-radius:10px;background:#ffffff0b;border:1px solid var(--line);transition:.2s}.btn:hover{background:#ffffff14}.primary{background:linear-gradient(135deg,#7467ff,#9a79ff);border:0}.danger{color:#ff9aaa}.today{min-height:180px}.task{display:flex;align-items:center;gap:11px;padding:11px 0;border-bottom:1px solid #ffffff09}.task:last-child{border:0}.check{width:20px;height:20px;border-radius:7px;border:1px solid #3a4351;background:#0d1117;display:grid;place-items:center}.check.done{background:var(--accent2);color:#06130f;border-color:var(--accent2)}.task.done span{text-decoration:line-through;color:#6e7786}.tag{margin-left:auto;padding:4px 7px;border-radius:7px;background:#ffffff08;color:#aab3c2;font-size:10px}.ring{width:90px;height:90px;border-radius:50%;background:conic-gradient(var(--accent) var(--p),#252b35 0);display:grid;place-items:center}.ring:after{content:attr(data-v);width:70px;height:70px;border-radius:50%;background:#11151d;display:grid;place-items:center;font-weight:800}.statrow{display:flex;justify-content:space-between;padding:8px 0}.subject{display:flex;gap:10px;align-items:center}.dot{width:10px;height:10px;border-radius:50%;background:var(--accent)}.dot.bio{background:#55d6be}.dot.chem{background:#ffbd69}.dot.physics{background:#70a7ff}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}.input,.select{background:#0d1117;border:1px solid var(--line);border-radius:10px;color:#fff;padding:10px 12px;outline:none}.input:focus,.select:focus{border-color:#6259a8}.chapter{display:grid;grid-template-columns:1fr auto;gap:14px;align-items:center}.checks{display:flex;gap:5px;flex-wrap:wrap}.mini{font-size:10px;padding:6px 7px;border-radius:7px;background:#ffffff08;color:#9da6b5;border:1px solid #ffffff08}.mini.on{background:#173d36;color:#78e0c8;border-color:#245b4e}.chapter .name{font-weight:700}.chapter .meta{font-size:11px;color:var(--muted);margin-top:4px}
+.timer{text-align:center;padding:28px}.time{font-size:68px;font-variant-numeric:tabular-nums;font-weight:800;letter-spacing:-.05em}.timer-controls{display:flex;justify-content:center;gap:8px;margin-top:15px}
+.goal{display:flex;align-items:center;gap:12px;padding:13px;border:1px solid var(--line);border-radius:12px;margin:8px 0}.goal input[type=text]{flex:1;background:transparent;border:0;color:#fff;outline:0}.goal .x{color:#697282}.assistant{min-height:380px;display:flex;flex-direction:column}.messages{flex:1;display:grid;gap:9px;align-content:start;margin-bottom:12px}.bubble{max-width:85%;padding:11px 13px;border-radius:13px;background:#ffffff08;line-height:1.5}.bubble.me{justify-self:end;background:#29224e}.ask{display:flex;gap:8px}.ask input{flex:1}.empty{padding:30px;text-align:center;color:var(--muted)}
+.home-hero{display:flex;justify-content:space-between;align-items:center;min-height:135px}
+.timer-simple{display:flex;align-items:center;justify-content:space-between;gap:20px}
+.todo-actions{display:flex;gap:8px;flex-wrap:wrap}
+.task .task-kind{font-size:10px;padding:4px 7px;border-radius:7px;background:#ffffff08;color:#aeb6c4;margin-left:auto}
+.task .task-delete{margin-left:0}
+.timer-simple-right{display:flex;align-items:center;gap:14px}
+.timer-simple-time{font-size:32px;font-weight:800;letter-spacing:-.04em;font-variant-numeric:tabular-nums}
+.motivation-card{display:flex;align-items:center;gap:15px;min-height:82px;background:linear-gradient(135deg,#17182a,#11151d)}
+.motivation-mark{width:38px;height:38px;border-radius:12px;background:linear-gradient(135deg,#7467ff,#55d6be);display:grid;place-items:center;font-size:18px;flex:none}
+.motivation-text{font-size:15px;font-weight:650;line-height:1.45;margin-top:4px}
+.history-nav{display:flex;align-items:center;gap:8px}
+.weekday-row,.study-calendar{display:grid;grid-template-columns:repeat(7,1fr);gap:7px}
+.weekday-row{color:var(--muted);font-size:10px;text-align:center;margin-bottom:7px}
+.day-cell{min-height:68px;border:1px solid #ffffff08;background:#0d1117;border-radius:9px;padding:7px;display:flex;flex-direction:column;justify-content:space-between;transition:.2s}
+.day-cell:hover{border-color:#414958;transform:translateY(-1px)}
+.day-cell.blank{background:transparent;border-color:transparent}
+.day-number{font-size:10px;color:#929bab}
+.day-hours{font-size:12px;font-weight:800}
+.study-0{background:#0d1117}.study-low{background:#172c2a;border-color:#1e4942}.study-mid{background:#1d5147;border-color:#2b7666}.study-high{background:#286f60;border-color:#3c9984}
+.today-cell{box-shadow:inset 0 0 0 1px #8b7cff}
+.history-legend{display:flex;gap:15px;flex-wrap:wrap;margin-top:13px;color:var(--muted);font-size:10px}
+.legend-dot{width:10px;height:10px;border-radius:3px;display:inline-block;margin-right:4px;vertical-align:-1px}
+.legend-dot.zero{background:#0d1117;border:1px solid #303743}.legend-dot.low{background:#172c2a}.legend-dot.mid{background:#1d5147}.legend-dot.high{background:#286f60}
+.history-row{display:grid;grid-template-columns:110px 1fr auto;gap:12px;align-items:center;padding:11px 0;border-bottom:1px solid #ffffff09}
+.history-row:last-child{border:0}
+.history-bar{height:6px;background:#252b35;border-radius:99px;overflow:hidden}.history-bar i{display:block;height:100%;background:linear-gradient(90deg,#7b6cff,#55d6be);border-radius:99px}
+@media(max-width:600px){.timer-simple{align-items:flex-start;flex-direction:column}.timer-simple-right{width:100%;justify-content:space-between}.timer-simple-right .btn{flex:1}.todo-actions{width:100%}.todo-actions .btn{flex:1}.history-row{grid-template-columns:80px 1fr auto}}
+
+@media(max-width:600px){.home-hero{align-items:flex-start;gap:18px}}
+
+.mini:disabled{opacity:.38;cursor:not-allowed;filter:saturate(.4)}
+.chapter-card{position:relative;overflow:hidden;padding:0;cursor:pointer}
+.chapter-card:before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 85% 10%,#8175ff16,transparent 34%),linear-gradient(135deg,#171c26,#10141b);pointer-events:none}
+.chapter-head{position:relative;display:flex;align-items:center;gap:15px;padding:19px 20px 15px}
+.chapter-icon{width:46px;height:46px;border-radius:14px;display:grid;place-items:center;background:linear-gradient(145deg,#272d3b,#171b24);border:1px solid #ffffff10;box-shadow:inset 0 1px #ffffff0d,0 10px 25px #0003;font-size:21px}
+.chapter-card:hover .chapter-icon{transform:translateY(-2px) rotate(-2deg)}
+.chapter-title{font-size:16px;font-weight:800;letter-spacing:-.02em}
+.chapter-sub{font-size:11px;color:var(--muted);margin-top:4px}
+.chapter-open{margin-left:auto;color:#8f98aa;font-size:20px;transition:.2s}
+.chapter-card:hover .chapter-open{transform:translateX(4px);color:#fff}
+.chapter-stats{position:relative;display:flex;gap:7px;flex-wrap:wrap;padding:0 20px 18px}
+.pill{font-size:10px;padding:6px 9px;border-radius:8px;background:#ffffff07;border:1px solid #ffffff09;color:#aeb6c4}
+.pill strong{color:#fff}
+.pill.locked{background:#18352f;border-color:#245b4e;color:#78e0c8}
+.chapter-progress{height:4px;background:#252b35}
+.chapter-progress i{display:block;height:100%;background:linear-gradient(90deg,#7b6cff,#55d6be);transition:width .5s ease}
+.chapter-detail{display:none;animation:in .25s ease}
+.chapter-detail.show{display:block}
+.detail-top{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+.back-btn{font-size:20px;width:40px;height:40px;border-radius:11px;background:#ffffff08;border:1px solid var(--line)}
+.detail-title{font-size:22px;font-weight:800}
+.detail-sub{font-size:12px;color:var(--muted);margin-top:3px}
+.detail-actions{margin-left:auto;display:flex;gap:8px}
+.lock-btn{background:linear-gradient(135deg,#7467ff,#9a79ff);padding:10px 14px;border-radius:10px}
+.lock-btn.locked{background:#173d36;color:#78e0c8}
+.detail-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+.detail-section{padding:18px}
+.detail-section h3{margin:0 0 5px;font-size:14px}
+.detail-section .hint{font-size:11px;color:var(--muted);margin-bottom:13px}
+.boxes{display:flex;flex-wrap:wrap;gap:8px}
+.track-box{width:42px;height:42px;border-radius:10px;border:1px solid #303846;background:#0d1117;display:grid;place-items:center;color:#8992a1;font-size:11px;font-weight:700;transition:.18s}
+.track-box:hover{transform:translateY(-2px);border-color:#595f72}
+.track-box.done{background:linear-gradient(135deg,#245e50,#173c34);border-color:#327766;color:#8ce6cf;box-shadow:0 5px 18px #55d6be12}
+.track-box.rev{font-size:10px}
+.add-count{display:flex;gap:8px;align-items:center;margin-top:13px}
+.add-count .btn{padding:7px 10px}
+.lock-note{font-size:11px;color:#78e0c8;background:#173d3622;border:1px solid #245b4e;padding:9px 11px;border-radius:9px;margin-top:12px}
+.structure-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+@media(max-width:700px){.detail-grid{grid-template-columns:1fr}.detail-actions{margin-left:0}.detail-top{align-items:flex-start;flex-wrap:wrap}.chapter-head{padding:16px}.chapter-stats{padding:0 16px 16px}}
+.checks{align-items:center}.chapter .checks{max-width:520px}.chapter{grid-template-columns:1fr auto}
+@media(max-width:900px){.side{width:72px;padding:15px 8px}.brand span,.nav button span,.side-note{display:none}.brand{justify-content:center}.nav button{text-align:center}.main{padding:20px 15px}.g4,.g3{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:600px){.top{align-items:flex-start}.title{font-size:25px}.g4,.g3,.g2{grid-template-columns:1fr}.time{font-size:52px}.side{position:fixed;bottom:0;top:auto;height:62px;width:100%;border-right:0;border-top:1px solid var(--line);display:flex;align-items:center;justify-content:center;padding:5px;backdrop-filter:blur(20px)}.brand{display:none}.nav{display:flex;width:100%;justify-content:space-around}.nav button{padding:9px;font-size:11px}.main{padding-bottom:85px}}
+
+.modal-backdrop{position:fixed;inset:0;background:#05070bcc;backdrop-filter:blur(10px);display:none;align-items:center;justify-content:center;padding:20px;z-index:1000;animation:modalFade .18s ease}
+.modal-backdrop.show{display:flex}
+@keyframes modalFade{from{opacity:0}to{opacity:1}}
+.sync-modal{width:min(520px,100%);background:linear-gradient(145deg,#171c26,#10141b);border:1px solid #2b3342;border-radius:20px;box-shadow:0 30px 90px #000b,0 0 0 1px #ffffff05 inset;overflow:hidden;animation:modalUp .2s ease}
+@keyframes modalUp{from{opacity:0;transform:translateY(10px) scale(.98)}to{opacity:1;transform:none}}
+.sync-modal-head{display:flex;align-items:center;gap:12px;padding:20px 22px 14px}
+.sync-modal-logo{width:34px;height:34px;border-radius:11px;background:linear-gradient(135deg,var(--accent),#54d6ff);display:grid;place-items:center;font-size:13px;font-weight:900;box-shadow:0 8px 25px #7b6dff44}
+.sync-modal-title{font-weight:800;font-size:16px}
+.sync-modal-body{padding:0 22px 20px}
+.sync-modal-message{color:#d8dce5;line-height:1.55;white-space:pre-line;margin-bottom:14px}
+.sync-modal-input{width:100%;background:#0b0f15;border:1px solid #2a3240;border-radius:12px;color:#fff;padding:13px 14px;outline:none;transition:.2s}
+.sync-modal-input:focus{border-color:#7467ff;box-shadow:0 0 0 3px #7467ff1c}
+.sync-modal-actions{display:flex;justify-content:flex-end;gap:8px;padding:0 22px 20px}
+.sync-modal-actions .btn{min-width:88px}
+
+.sync-subject-options{display:none;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:4px}
+.sync-subject-options.show{display:grid}
+.sync-subject-option{border:1px solid #2a3240;background:#0d1118;color:#e9edf5;border-radius:14px;padding:15px 10px;cursor:pointer;font-weight:750;text-align:center;transition:.18s}
+.sync-subject-option:hover{transform:translateY(-2px);border-color:#7467ff;background:#17152a;box-shadow:0 8px 25px #0005}
+.sync-subject-option .subject-emoji{display:block;font-size:25px;margin-bottom:6px}
+.subject-folder{margin:22px 0 30px}
+.subject-folder-head{display:flex;align-items:center;gap:12px;margin-bottom:12px;padding:12px 14px;border:1px solid #252d3a;border-radius:16px;background:linear-gradient(135deg,#151a24,#0e1219);box-shadow:0 10px 30px #0003}
+.subject-folder-tab{font-size:12px;font-weight:900;letter-spacing:.12em;padding:7px 10px;border-radius:9px;background:#201d3a;color:#bdb5ff}
+.subject-folder-title{font-size:18px;font-weight:850}
+.subject-folder-count{margin-left:auto;color:var(--muted);font-size:13px}
+.subject-folder-grid{display:grid;gap:14px}
+.subject-switch{display:flex;gap:6px;align-items:center;flex-wrap:wrap}.subject-switch button{border:1px solid var(--line);background:#0d1118;color:var(--muted);padding:10px 13px;border-radius:12px;cursor:pointer;font:inherit;transition:.2s}.subject-switch button:hover{color:var(--text);border-color:#3a4354}.subject-switch button.active{color:#fff;background:linear-gradient(135deg,#7768ff,#9a6dff);border-color:transparent;box-shadow:0 8px 22px #7d6cff2b}.subject-switch button[data-subject="Physics"].active{background:linear-gradient(135deg,#566dff,#6e9cff)}.subject-switch button[data-subject="Chemistry"].active{background:linear-gradient(135deg,#8b63ff,#b36dff)}.subject-switch button[data-subject="Biology"].active{background:linear-gradient(135deg,#36bfa5,#5bd8be)}
+.sync-choice-list{display:grid;gap:10px;margin-top:14px;max-height:48vh;overflow:auto}
+.sync-choice-btn{width:100%;display:flex;align-items:center;gap:12px;text-align:left;background:#151b25;border:1px solid #293244;color:#f4f6fb;border-radius:13px;padding:13px 15px;font-size:15px;cursor:pointer;transition:.18s}
+.sync-choice-btn:hover{border-color:#7568ff;background:#1a2030;transform:translateY(-1px)}
+.sync-choice-btn:active{transform:scale(.99)}
+.sync-choice-icon{width:30px;height:30px;display:grid;place-items:center;border-radius:9px;background:#0d1118}
+
+.ai-status{display:flex;align-items:center;gap:7px;color:var(--muted);font-size:12px}
+.ai-dot{width:8px;height:8px;border-radius:50%;background:var(--accent2);box-shadow:0 0 12px #55d6be88}
+.ai-dot.busy{background:var(--warn);box-shadow:0 0 12px #ffbd6988}
+.ai-dot.error{background:var(--danger);box-shadow:0 0 12px #ff718588}
+.ai-assistant{min-height:560px}
+.ai-intro{display:flex;align-items:center;gap:12px;padding-bottom:12px}
+.ai-avatar{width:42px;height:42px;border-radius:13px;display:grid;place-items:center;background:linear-gradient(135deg,var(--accent),#55d6be);font-size:19px;font-weight:900;box-shadow:0 10px 30px #8b7cff33}
+.ai-chips{display:flex;gap:7px;flex-wrap:wrap;margin:4px 0 14px}
+.ai-chip{background:#ffffff07;border:1px solid var(--line);padding:8px 10px;border-radius:10px;color:#cbd1dc;font-size:12px}
+.ai-chip:hover{border-color:#6f63e8;background:#17142a}
+.ai-bubble{background:#151a23}
+.ai-ask{align-items:flex-end}
+.ai-input{resize:none;min-height:44px;max-height:140px;padding:12px 13px}
+.ai-send{height:44px;min-width:78px}
+.ai-note{font-size:11px;color:#6f7889;margin-top:8px}
+</style>
+</head>
+<body>
+
+<div class="modal-backdrop" id="syncModal" onclick="modalBackdropClick(event)">
+  <div class="sync-modal" role="dialog" aria-modal="true" aria-labelledby="syncModalTitle">
+    <div class="sync-modal-head">
+      <div class="sync-modal-logo">S</div>
+      <div class="sync-modal-title" id="syncModalTitle">SYNCAPSO</div>
+    </div>
+    <div class="sync-modal-body">
+      <div class="sync-modal-message" id="syncModalMessage"></div>
+      <input class="sync-modal-input" id="syncModalInput" autocomplete="off">
+      <div class="sync-subject-options" id="syncModalOptions"></div>
+    </div>
+    <div class="sync-modal-actions">
+      <button class="btn" id="syncModalCancel" onclick="closeSyncModal(false)">Cancel</button>
+      <button class="btn primary" id="syncModalOk" onclick="closeSyncModal(true)">OK</button>
+    </div>
+  </div>
+</div>
+
+<div class="app">
+<aside class="side">
+  <div class="brand"><div class="logo">N</div><span>SYNCAPSO</span></div>
+  <nav class="nav">
+    <button class="active" onclick="showPage('home',this)">⌂ <span>Dashboard</span></button>
+    <button onclick="showPage('chapters',this)">▦ <span>Chapters</span></button>
+    <button onclick="showPage('history',this)">◷ <span>Study History</span></button>
+    <button onclick="showPage('assistant',this)">✦ <span>Study Help</span></button>
+  </nav>
+  <div class="side-note">NEET 2026 syllabus structure<br>Progress is stored locally on this device.</div>
+</aside>
+
+<main class="main">
+<header class="top">
+  <div><div class="eyebrow">SYNCAPSO</div><div class="title" id="greeting">Good evening 👋</div><div class="sub" id="dateText"></div></div>
+  <div class="clock" id="clock"></div>
+</header>
+
+<section id="home" class="page show">
+  <div class="card motivation-card" style="margin-top:14px">
+    <div class="motivation-mark">✦</div>
+    <div>
+      <div class="label">TODAY'S MOTIVATION</div>
+      <div class="motivation-text" id="dailyMotivation"></div>
+    </div>
+  </div>
+
+  <div class="grid g2" style="margin-top:14px">
+    <div class="card">
+      <div class="label">TODAY'S STUDY TIME</div>
+      <div class="metric" id="todayTime">0m</div>
+      <div class="progress"><i id="todayTimeBar"></i></div>
+    </div>
+    <div class="card timer-simple">
+      <div class="timer-simple-right">
+        <div class="timer-simple-time" id="homeTimerDisplay">00:00:00</div>
+        <button class="btn primary" id="homeTimerBtn" onclick="toggleHomeTimer()">Start Timer</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="section"><div><h2>Today's To-Do List</h2><div class="sub">Add a batch checkpoint or your own task.</div></div><div class="todo-actions"><button class="btn primary" onclick="addBatchGoal()">+ Batch task</button><button class="btn" onclick="addCustomGoal()">+ My task</button></div></div>
+  <div class="card" id="todayTasks"></div>
+</section>
+<section id="chapters" class="page">
+  <div class="section"><div><h2>My Batch Chapters</h2><div class="sub">Add lectures and DPPs as your batch reveals them. Lock the structure when the chapter is fully defined.</div></div><button class="btn primary" onclick="addChapter()">+ Add Chapter</button></div>
+  <div class="toolbar"><input class="input" id="search" placeholder="Search chapter..." oninput="renderChapters()"><div class="subject-switch" id="subjectSwitch"><button type="button" data-subject="All">All</button><button type="button" data-subject="Physics">⚡ Physics</button><button type="button" data-subject="Chemistry">⚗️ Chemistry</button><button type="button" data-subject="Biology">🧬 Biology</button></div><select class="select" id="statusFilter" onchange="renderChapters()"><option>All status</option><option>Pending</option><option>In progress</option><option>Complete</option></select></div>
+  <div class="grid" id="chapterList"></div>
+  <div id="chapterDetail" class="chapter-detail"></div>
+</section>
+
+<section id="history" class="page">
+  <div class="section">
+    <div><h2>Study History</h2><div class="sub">Your study time, day by day — stored locally on this device.</div></div>
+    <div class="history-nav">
+      <button class="btn" onclick="changeHistoryMonth(-1)">‹</button>
+      <strong id="historyMonth"></strong>
+      <button class="btn" onclick="changeHistoryMonth(1)">›</button>
+    </div>
+  </div>
+
+  <div class="grid g3">
+    <div class="card"><div class="label">This week</div><div class="metric" id="historyWeek">0h</div></div>
+    <div class="card"><div class="label">This month</div><div class="metric" id="historyMonthTotal">0h</div></div>
+    <div class="card"><div class="label">Daily average</div><div class="metric" id="historyAverage">0m</div></div>
+  </div>
+
+  <div class="section"><h2>Monthly study map</h2></div>
+  <div class="card">
+    <div class="weekday-row"><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span></div>
+    <div class="study-calendar" id="studyCalendar"></div>
+    <div class="history-legend"><span><i class="legend-dot zero"></i>0</span><span><i class="legend-dot low"></i>&lt;2h</span><span><i class="legend-dot mid"></i>2–5h</span><span><i class="legend-dot high"></i>5h+</span></div>
+  </div>
+
+  <div class="section"><h2>Daily log</h2></div>
+  <div class="card" id="dailyHistoryList"></div>
+</section>
+
+<section id="assistant" class="page">
+  <div class="section">
+    <div>
+      <h2>SYNCAPSO AI Tutor</h2>
+      <div class="sub">Real AI help for NEET doubts, concepts, planning and revision.</div>
+    </div>
+    <div class="ai-status"><span class="ai-dot"></span><span id="aiStatus">AI ready</span></div>
+  </div>
+
+  <div class="card assistant ai-assistant">
+    <div class="ai-intro">
+      <div class="ai-avatar">✦</div>
+      <div>
+        <strong>Ask SYNCAPSO AI</strong>
+        <div class="sub">Ask in English, Hinglish, or Hindi. It also knows your current SYNCAPSO progress.</div>
+      </div>
+    </div>
+
+    <div class="ai-chips">
+      <button class="ai-chip" onclick="useAiPrompt('Explain my weakest current chapter in simple Hinglish.')">Explain my weakest chapter</button>
+      <button class="ai-chip" onclick="useAiPrompt('What should I study right now?')">What should I study now?</button>
+      <button class="ai-chip" onclick="useAiPrompt('Make me a focused study plan for today.')">Plan my day</button>
+      <button class="ai-chip" onclick="useAiPrompt('Help me revise my pending chapters.')">Help with revision</button>
+    </div>
+
+    <div class="messages" id="messages">
+      <div class="bubble ai-bubble">Hey 👋 I’m your SYNCAPSO AI Tutor. Ask me a doubt, give me a question, or ask what you should study next.</div>
+    </div>
+
+    <div class="ask ai-ask">
+      <textarea class="input ai-input" id="ask" rows="1" placeholder="Ask your AI tutor anything…" onkeydown="handleAiKey(event)"></textarea>
+      <button class="btn primary ai-send" id="aiSendBtn" onclick="askCoach()">Send</button>
+    </div>
+    <div class="ai-note">AI can make mistakes. For important exam facts, verify against NCERT and your class material.</div>
+  </div>
+</section>
+</main></div>
+
+<script>
+
+let syncModalResolver=null;
+let syncModalMode='prompt';
+
+function openSyncModal({title='SYNCAPSO',message='',mode='prompt',value='',placeholder=''}={}){
+  return new Promise(resolve=>{
+    syncModalResolver=resolve;
+    syncModalMode=mode;
+    const modal=document.getElementById('syncModal');
+    const titleEl=document.getElementById('syncModalTitle');
+    const msgEl=document.getElementById('syncModalMessage');
+    const input=document.getElementById('syncModalInput');
+    const options=document.getElementById('syncModalOptions');
+    const cancel=document.getElementById('syncModalCancel');
+    if(!modal||!titleEl||!msgEl||!input||!options||!cancel){
+      resolve(mode==='prompt'?null:false);
+      return;
+    }
+    titleEl.textContent=title;
+    msgEl.textContent=message;
+    input.value=value||'';
+    input.placeholder=placeholder||'';
+    input.style.display=mode==='prompt'?'block':'none';
+    options.classList.toggle('show',mode==='subject');
+    options.innerHTML=mode==='subject'
+      ? [['Physics','⚡'],['Chemistry','⚗️'],['Biology','🧬']].map(([name,icon])=>
+          `<button type="button" class="sync-subject-option" data-subject="${name}">
+             <span class="subject-emoji">${icon}</span>${name}
+           </button>`).join('')
+      : '';
+    cancel.style.display=(mode==='alert'||mode==='subject')?'none':'inline-block';
+    document.getElementById('syncModalOk').style.display=mode==='subject'?'none':'inline-block';
+    document.getElementById('syncModalOk').textContent=mode==='confirm'?'Confirm':'OK';
+    modal.classList.add('show');
+
+    options.querySelectorAll('[data-subject]').forEach(btn=>{
+      btn.onclick=()=>{
+        const result=btn.dataset.subject;
+        modal.classList.remove('show');
+        const r=syncModalResolver; syncModalResolver=null;
+        if(r)r(result);
+      };
+    });
+
+    setTimeout(()=>{
+      if(mode==='prompt'){input.focus();input.select();}
+      else if(mode!=='subject')document.getElementById('syncModalOk').focus();
+    },40);
+  });
+}
+
+function closeSyncModal(ok){
+  const modal=document.getElementById('syncModal');
+  if(!modal || !modal.classList.contains('show')) return;
+  const input=document.getElementById('syncModalInput');
+  const result=syncModalMode==='prompt' ? (ok ? input.value : null) : (syncModalMode==='choice' ? null : !!ok);
+  modal.classList.remove('show');
+  const resolve=syncModalResolver;
+  syncModalResolver=null;
+  if(resolve) resolve(result);
+}
+
+function modalBackdropClick(e){
+  if(e.target===e.currentTarget && syncModalMode!=='alert') closeSyncModal(false);
+}
+
+function syncPrompt(message,defaultValue=''){
+  return openSyncModal({message,mode:'prompt',value:defaultValue});
+}
+function syncConfirm(message){
+  return openSyncModal({message,mode:'confirm'});
+}
+function syncAlert(message){
+  return openSyncModal({message,mode:'alert'});
+}
+
+document.addEventListener('keydown',e=>{
+  const modal=document.getElementById('syncModal');
+  if(!modal || !modal.classList.contains('show')) return;
+  if(e.key==='Escape' && syncModalMode!=='alert'){
+    e.preventDefault();
+    closeSyncModal(false);
+  }else if(e.key==='Enter' && syncModalMode!=='subject'){
+    e.preventDefault();
+    closeSyncModal(true);
+  }
+});
+
+const KEY='neetOS_v1';
+function dateKeySafe(d=new Date()){return d.toISOString().slice(0,10)}
+function escapeHtml(v){return String(v).replace(/[&<>'"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[m]));}
+let state=JSON.parse(localStorage.getItem(KEY)||'null')||{chapters:{},goals:[],logs:{},targets:{day:6,week:42}};
+let chapterSubjectView='All';
+function normalizeState(){
+  if(!state || typeof state!=='object') state={chapters:{},goals:[],logs:{},targets:{day:6,week:42}};
+  if(!state.chapters) state.chapters={};
+  if(!Array.isArray(state.goals)) state.goals=[];
+  state.goals=state.goals.map(g=>({id:String(g.id||Date.now()+Math.random()),text:String(g.text||''),date:g.date||dateKeySafe(),done:!!g.done,type:g.type||'custom',chapterId:g.chapterId||null,kind:g.kind||null,index:Number.isInteger(g.index)?g.index:null}));
+  if(!state.logs) state.logs={};
+  if(!state.targets) state.targets={day:6,week:42};
+  Object.values(state.chapters).forEach(c=>{
+    c.lecTarget=Number(c.lecTarget||0);
+    c.dppTarget=Number(c.dppTarget||0);
+    c.lecDone=Math.min(Number(c.lecDone||0),c.lecTarget);
+    c.dppDone=Math.min(Number(c.dppDone||0),c.dppTarget);
+    c.revDone=Array.isArray(c.revDone)?c.revDone.slice(0,5):[false,false,false,false,false];
+    while(c.revDone.length<5)c.revDone.push(false);
+    c.locked=!!c.locked;
+    c.pyq=!!c.pyq;
+    c.nc=!!c.nc;
+    c.test=!!c.test;
+  });
+}
+normalizeState();
+
+let homeTimerSeconds=0;
+let homeTimerRunning=false;
+let homeTimerStartedAt=0;
+let homeTimerInterval=null;
+
+const dailyMotivations=[
+  "Small progress every day becomes a huge result.",
+  "You don't need a perfect day. You need a focused one.",
+  "One lecture. One DPP. One revision. Keep moving.",
+  "Your future score is built from today's ordinary sessions.",
+  "Consistency beats intensity when the goal is long-term.",
+  "Start before you feel ready. Momentum comes after.",
+  "Protect your study time like it matters — because it does.",
+  "A difficult chapter becomes easier one focused session at a time.",
+  "Do the next useful thing. Then repeat.",
+  "Today's effort is tomorrow's confidence.",
+  "Don't count the hours first. Make the hours count.",
+  "Progress is allowed to be slow. It just shouldn't stop.",
+  "Finish today's work before worrying about tomorrow's.",
+  "Your only competition today is the version of you that wanted to procrastinate."
+];
+
+function getDailyMotivation(){
+  const d=new Date();
+  const start=new Date(d.getFullYear(),0,0);
+  const day=Math.floor((d-start)/86400000);
+  return dailyMotivations[day%dailyMotivations.length];
+}
+function currentTimerSeconds(){
+  if(!homeTimerRunning)return homeTimerSeconds;
+  return Math.max(0,Math.floor((Date.now()-homeTimerStartedAt)/1000));
+}
+function drawHomeTimer(){
+  const total=currentTimerSeconds();
+  const h=Math.floor(total/3600);
+  const m=Math.floor((total%3600)/60);
+  const sec=total%60;
+  const el=document.getElementById('homeTimerDisplay');
+  if(el)el.textContent=`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
+  const btn=document.getElementById('homeTimerBtn');
+  if(btn)btn.textContent=homeTimerRunning?'Stop & Save':'Start Timer';
+}
+function toggleHomeTimer(){
+  if(homeTimerRunning){
+    const elapsedSeconds=currentTimerSeconds();
+    homeTimerRunning=false;
+    clearInterval(homeTimerInterval);
+    homeTimerInterval=null;
+    homeTimerSeconds=0;
+    recordStudyMinutes(elapsedSeconds/60);
+  }else{
+    homeTimerRunning=true;
+    homeTimerStartedAt=Date.now();
+    homeTimerSeconds=0;
+    homeTimerInterval=setInterval(()=>{drawHomeTimer();renderHomeStudyTime();},1000);
+    drawHomeTimer();
+  }
+}
+function recordStudyMinutes(minutes){
+  if(!Number.isFinite(minutes)||minutes<=0)return;
+  state.logs[dateKey()]=(state.logs[dateKey()]||0)+minutes;
+  save();render();renderHistory();
+}
+function renderHomeStudyTime(){
+  const base=loggedToday();
+  const live=homeTimerRunning?currentTimerSeconds()/60:0;
+  const total=base+live;
+  const el=document.getElementById('todayTime'); if(el)el.textContent=fmt(total);
+  const bar=document.getElementById('todayTimeBar'); if(bar)bar.style.width=Math.min(100,(total/360)*100)+'%';
+}
+function monthName(d){
+  return d.toLocaleDateString('en-IN',{month:'long',year:'numeric'});
+}
+function monthDays(d){
+  return new Date(d.getFullYear(),d.getMonth()+1,0).getDate();
+}
+function monthTotal(y,m){
+  let total=0,days=new Date(y,m+1,0).getDate();
+  for(let i=1;i<=days;i++)total+=state.logs[`${y}-${String(m+1).padStart(2,'0')}-${String(i).padStart(2,'0')}`]||0;
+  return total;
+}
+function weekTotalFrom(d){
+  const x=new Date(d);x.setHours(0,0,0,0);
+  const monday=(x.getDay()+6)%7;x.setDate(x.getDate()-monday);
+  let total=0;
+  for(let i=0;i<7;i++){const q=new Date(x);q.setDate(x.getDate()+i);total+=state.logs[dateKey(q)]||0}
+  return total;
+}
+function changeHistoryMonth(delta){
+  historyCursor.setMonth(historyCursor.getMonth()+delta);
+  renderHistory();
+}
+function renderHistory(){
+  const y=historyCursor.getFullYear(),m=historyCursor.getMonth(),days=monthDays(historyCursor);
+  const total=monthTotal(y,m);
+  const weeks=weekTotalFrom(new Date(y,m,Math.min(days,Math.max(1,new Date().getDate()))));
+  const monthEl=document.getElementById('historyMonth');if(!monthEl)return;
+  monthEl.textContent=monthName(historyCursor);
+  document.getElementById('historyMonthTotal').textContent=fmt(total);
+  document.getElementById('historyWeek').textContent=fmt(weeks);
+  document.getElementById('historyAverage').textContent=fmt(days?total/days:0);
+
+  const grid=document.getElementById('studyCalendar');
+  const first=new Date(y,m,1),offset=(first.getDay()+6)%7;
+  let html='';
+  for(let i=0;i<offset;i++)html+='<div class="day-cell blank"></div>';
+  for(let day=1;day<=days;day++){
+    const k=`${y}-${String(m+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+    const mins=state.logs[k]||0;
+    const cls=mins>=300?'study-high':mins>=120?'study-mid':mins>0?'study-low':'study-0';
+    const today=k===dateKey()?' today-cell':'';
+    html+=`<div class="day-cell ${cls}${today}" title="${k}: ${fmt(mins)}">
+      <span class="day-number">${day}</span><span class="day-hours">${mins?fmt(mins):'—'}</span>
+    </div>`;
+  }
+  grid.innerHTML=html;
+
+  const list=document.getElementById('dailyHistoryList');
+  let rows='';
+  for(let day=1;day<=days;day++){
+    const k=`${y}-${String(m+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`, mins=state.logs[k]||0;
+    if(mins>0)rows+=`<div class="history-row"><span>${new Date(y,m,day).toLocaleDateString('en-IN',{weekday:'short',day:'numeric'})}</span><div class="history-bar"><i style="width:${Math.min(100,mins/600*100)}%"></i></div><b>${fmt(mins)}</b></div>`;
+  }
+  list.innerHTML=rows||'<div class="empty">No study sessions recorded for this month yet.</div>';
+}
+function save(){localStorage.setItem(KEY,JSON.stringify(state))}
+function allChapters(){
+  return Object.values(state.chapters).map(c=>({id:c.id,s:c.s,n:c.n})).sort((a,b)=>a.s.localeCompare(b.s)||a.n.localeCompare(b.n));
+}
+function cp(s,n){let x=allChapters().find(c=>c.s===s&&c.n===n);return x?state.chapters[x.id]:{}}
+function chapterPct(c){
+  if(!c) return 0;
+  // Only count checkpoints that actually exist for this chapter.
+  // A chapter with 0 planned DPPs must never get a 0/0 or partial DPP penalty.
+  const parts=[];
+  if((c.lecTarget||0)>0) parts.push(Math.min(100,((c.lecDone||0)/c.lecTarget)*100));
+  if((c.dppTarget||0)>0) parts.push(Math.min(100,((c.dppDone||0)/c.dppTarget)*100));
+  parts.push(c.nc?100:0,c.pyq?100:0,c.rev?100:0,c.test?100:0);
+  return parts.length?Math.round(parts.reduce((a,b)=>a+b,0)/parts.length):0;
+}
+function overall(){let a=allChapters();return a.length?Math.round(a.reduce((x,c)=>x+chapterPct(state.chapters[c.id]),0)/(a.length)):0}
+function subjectPct(s){let a=allChapters().filter(c=>c.s===s);return a.length?Math.round(a.reduce((x,c)=>x+chapterPct(state.chapters[c.id]),0)/a.length):0}
+function fmt(min){let h=Math.floor(min/60),m=Math.round(min%60);return h?`${h}h ${m}m`:`${m}m`}
+function dateKey(d=new Date()){return d.toISOString().slice(0,10)}
+function weekKey(d=new Date()){let x=new Date(d);x.setHours(0,0,0,0);let day=(x.getDay()+6)%7;x.setDate(x.getDate()-day);return x.toISOString().slice(0,10)}
+function monthKey(d=new Date()){return d.toISOString().slice(0,7)}
+function loggedToday(){return state.logs[dateKey()]||0}
+function loggedWeek(){let total=0,k=weekKey();for(let i=0;i<7;i++){let d=new Date(k);d.setDate(d.getDate()+i);total+=state.logs[dateKey(d)]||0}return total}
+function loggedMonth(){let total=0,m=monthKey();Object.entries(state.logs).forEach(([k,v])=>{if(k.startsWith(m))total+=v});return total}
+function render(){
+  document.getElementById('dateText').textContent=new Date().toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  updateClock();
+  renderHomeStudyTime();
+  const mot=document.getElementById('dailyMotivation'); if(mot)mot.textContent=getDailyMotivation();
+  drawHomeTimer();
+  renderToday();
+  renderChapters();
+  renderHistory();
+}
+
+
+function updateClock(){
+  const d=new Date();
+  const h=d.getHours();
+  let greeting=h>=5&&h<12?'Good morning':h>=12&&h<17?'Good afternoon':h>=17&&h<21?'Good evening':'Good night';
+  const clock=document.getElementById('clock'); if(clock)clock.textContent=d.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  const g=document.getElementById('greeting'); if(g)g.textContent=greeting+' 👋';
+}
+function showPage(p,b){
+  document.querySelectorAll('.page').forEach(x=>x.classList.remove('show'));
+  document.getElementById(p).classList.add('show');
+  const top=document.querySelector('.top');
+  if(top) top.style.display = p==='home' ? '' : 'none';
+  document.querySelectorAll('.nav button').forEach(x=>x.classList.remove('active'));
+  if(b)b.classList.add('active');
+  if(p==='history'){
+    historyCursor=new Date();
+    historyCursor.setDate(1);
+    renderHistory();
+  }
+}
+async function addChapter(){
+  const subject=await openSyncModal({
+    title:'Choose Subject',
+    message:'Select the subject for this batch chapter.',
+    mode:'subject'
+  });
+  if(!subject)return;
+  const name=await syncPrompt('Chapter name:');
+  if(!name)return;
+  const id='ch_'+Date.now();
+  state.chapters[id]={id,s:subject,n:name.trim(),lecTarget:0,lecDone:0,dppTarget:0,dppDone:0,
+    revDone:[false,false,false,false,false],pyq:false,nc:false,test:false,locked:false};
+  save();render();openChapter(id);
+}
+async function deleteChapter(cid){
+  if(!await syncConfirm('Delete this chapter and all its tracker progress?'))return;
+  delete state.chapters[cid];save();render();closeChapter();
+}
+function addStructure(cid,type){
+  const c=state.chapters[cid];if(!c||c.locked)return;
+  if(type==='lec')c.lecTarget=(c.lecTarget||0)+1;
+  if(type==='dpp')c.dppTarget=(c.dppTarget||0)+1;
+  save();renderChapterDetail(cid);
+}
+function toggleLecture(cid,i){
+  const c=state.chapters[cid];if(!c||i<0||i>=c.lecTarget)return;
+  // Completed lecture boxes are independent of the structure count.
+  c.lecDone=c._lecBoxes?.filter(Boolean).length||0;
+  if(!Array.isArray(c._lecBoxes))c._lecBoxes=Array(c.lecTarget).fill(false);
+  c._lecBoxes[i]=!c._lecBoxes[i];
+  c.lecDone=c._lecBoxes.filter(Boolean).length;
+  save();render();openChapter(cid);
+}
+function toggleDpp(cid,i){
+  const c=state.chapters[cid];if(!c||i<0||i>=c.dppTarget)return;
+  if(!Array.isArray(c._dppBoxes))c._dppBoxes=Array(c.dppTarget).fill(false);
+  c._dppBoxes[i]=!c._dppBoxes[i];
+  c.dppDone=c._dppBoxes.filter(Boolean).length;
+  save();render();openChapter(cid);
+}
+function toggleRevision(cid,i){
+  const c=state.chapters[cid];if(!c)return;
+  if(!Array.isArray(c.revDone))c.revDone=[false,false,false,false,false];
+  c.revDone[i]=!c.revDone[i];save();render();openChapter(cid);
+}
+function toggleCheckpoint(cid,k){
+  const c=state.chapters[cid];if(!c)return;
+  c[k]=!c[k];save();render();openChapter(cid);
+}
+function lockChapter(cid){
+  const c=state.chapters[cid];if(!c)return;
+  if(!c.lecTarget&&!c.dppTarget){syncAlert('Add at least one lecture or DPP before locking the chapter structure.');return}
+  c.locked=true;
+  save();render();openChapter(cid);
+}
+function chapterPct(c){
+  if(!c)return 0;
+  const parts=[];
+  if((c.lecTarget||0)>0)parts.push(Math.min(100,((c.lecDone||0)/c.lecTarget)*100));
+  if((c.dppTarget||0)>0)parts.push(Math.min(100,((c.dppDone||0)/c.dppTarget)*100));
+  if(c.nc!==undefined)parts.push(c.nc?100:0);
+  if(c.pyq!==undefined)parts.push(c.pyq?100:0);
+  const rev=(c.revDone||[]).filter(Boolean).length;
+  parts.push(rev/5*100);
+  if(c.test!==undefined)parts.push(c.test?100:0);
+  return parts.length?Math.round(parts.reduce((a,b)=>a+b,0)/parts.length):0;
+}
+function openChapter(cid){
+  document.getElementById('chapterList').style.display='none';
+  document.getElementById('chapterDetail').classList.add('show');
+  document.getElementById('chapterList').dataset.open=cid;
+  renderChapterDetail(cid);
+}
+function closeChapter(){
+  document.getElementById('chapterDetail').classList.remove('show');
+  document.getElementById('chapterList').style.display='grid';
+  document.getElementById('chapterList').dataset.open='';
+  renderChapters();
+}
+function renderChapterDetail(cid){
+  const c=state.chapters[cid];
+  if(!c){closeChapter();return}
+  if(!Array.isArray(c._lecBoxes))c._lecBoxes=Array(c.lecTarget||0).fill(false);
+  if(c._lecBoxes.length<c.lecTarget)c._lecBoxes.push(...Array(c.lecTarget-c._lecBoxes.length).fill(false));
+  if(!Array.isArray(c._dppBoxes))c._dppBoxes=Array(c.dppTarget||0).fill(false);
+  if(c._dppBoxes.length<c.dppTarget)c._dppBoxes.push(...Array(c.dppTarget-c._dppBoxes.length).fill(false));
+  if(!Array.isArray(c.revDone))c.revDone=[false,false,false,false,false];
+  c.lecDone=c._lecBoxes.filter(Boolean).length;c.dppDone=c._dppBoxes.filter(Boolean).length;
+  const pct=chapterPct(c),revDone=c.revDone.filter(Boolean).length;
+  const lecButtons=c._lecBoxes.map((done,i)=>`<button type="button" class="track-box ${done?'done':''}" onclick="toggleLecture('${c.id}',${i})">${done?'✓':'L'+(i+1)}</button>`).join('');
+  const dppButtons=c._dppBoxes.map((done,i)=>`<button type="button" class="track-box ${done?'done':''}" onclick="toggleDpp('${c.id}',${i})">${done?'✓':'D'+(i+1)}</button>`).join('');
+  const revButtons=c.revDone.map((done,i)=>`<button type="button" class="track-box rev ${done?'done':''}" onclick="toggleRevision('${c.id}',${i})">${done?'✓':'REV '+(i+1)}</button>`).join('');
+  document.getElementById('chapterDetail').innerHTML=`
+    <div class="detail-top">
+      <button type="button" class="back-btn" onclick="closeChapter()">‹</button>
+      <div><div class="detail-title">${c.n}</div><div class="detail-sub">${c.s} • ${pct}% complete</div></div>
+      <div class="detail-actions">
+        ${c.locked?'<button type="button" class="lock-btn locked">🔒 Structure locked</button>':`<button type="button" class="lock-btn" onclick="lockChapter('${c.id}')">🔒 Lock Structure</button>`}
+        <button type="button" class="btn danger" onclick="deleteChapter('${c.id}')">Delete</button>
+      </div>
+    </div>
+    <div class="card" style="margin-bottom:14px"><div class="structure-row"><b>Chapter progress</b><span class="label">${c.locked?'Counts are frozen':'Keep adding lectures/DPPs until your batch chapter is fully defined'}</span></div><div class="progress"><i style="width:${pct}%"></i></div>${c.locked?'<div class="lock-note">🔒 Locked — no new lecture or DPP boxes can be added.</div>':''}</div>
+    <div class="detail-grid">
+      <div class="card detail-section"><h3>🎬 Lectures <span class="label">(${c.lecDone}/${c.lecTarget} complete)</span></h3><div class="hint">Each box = one actual lecture from your batch.</div><div class="boxes">${lecButtons||'<span class="label">No lectures added yet.</span>'}</div>${c.locked?'':`<div class="add-count"><button type="button" class="btn primary" onclick="addStructure('${c.id}','lec')">＋ Add 1 Lecture</button><span class="label">Current: ${c.lecTarget}</span></div>`}</div>
+      <div class="card detail-section"><h3>📝 DPPs <span class="label">(${c.dppDone}/${c.dppTarget} complete)</span></h3><div class="hint">Each box = one DPP. Add them as your batch reveals them.</div><div class="boxes">${dppButtons||'<span class="label">No DPPs added yet.</span>'}</div>${c.locked?'':`<div class="add-count"><button type="button" class="btn primary" onclick="addStructure('${c.id}','dpp')">＋ Add 1 DPP</button><span class="label">Current: ${c.dppTarget}</span></div>`}</div>
+      <div class="card detail-section"><h3>🔁 Revision <span class="label">(${revDone}/5 complete)</span></h3><div class="hint">Five separate revision cycles for every chapter.</div><div class="boxes">${revButtons}</div></div>
+      <div class="card detail-section"><h3>📚 NCERT • PYQ • Test</h3><div class="hint">One completion box for each checkpoint.</div><div class="boxes"><button type="button" class="track-box ${c.nc?'done':''}" onclick="toggleCheckpoint('${c.id}','nc')">${c.nc?'✓':'NCERT'}</button><button type="button" class="track-box ${c.pyq?'done':''}" onclick="toggleCheckpoint('${c.id}','pyq')">${c.pyq?'✓':'PYQ'}</button><button type="button" class="track-box ${c.test?'done':''}" onclick="toggleCheckpoint('${c.id}','test')">${c.test?'✓':'TEST'}</button></div></div>
+    </div>`;
+}
+
+function setChapterSubject(subject){chapterSubjectView=subject;renderChapters();}
+function renderChapters(){
+  const q=(document.getElementById('search')?.value||'').toLowerCase();
+  const st=document.getElementById('statusFilter')?.value||'All status';
+  const a=allChapters().filter(c=>(chapterSubjectView==='All'||c.s===chapterSubjectView)&&c.n.toLowerCase().includes(q)).filter(c=>{const p=chapterPct(state.chapters[c.id]);return st==='All status'||(st==='Pending'&&p===0)||(st==='In progress'&&p>0&&p<100)||(st==='Complete'&&p===100);});
+  const icons={Physics:'⚡',Chemistry:'⚗️',Biology:'🧬'};
+  document.getElementById('chapterList').innerHTML=a.map(c=>{const x=state.chapters[c.id],p=chapterPct(x),ld=x.lecDone||0,dd=x.dppDone||0,rd=(x.revDone||[]).filter(Boolean).length;return `<div class="card chapter-card" onclick="openChapter('${x.id}')"><div class="chapter-head"><div class="chapter-icon">${icons[x.s]||'📘'}</div><div><div class="chapter-title">${x.n}</div><div class="chapter-sub">${x.s} • ${p}% complete ${x.locked?'• 🔒 locked':''}</div></div><div class="chapter-open">›</div></div><div class="chapter-stats"><span class="pill"><strong>${ld}/${x.lecTarget}</strong> Lec</span><span class="pill">${x.dppTarget>0?`<strong>${dd}/${x.dppTarget}</strong> DPP`:'No DPP'}</span><span class="pill"><strong>${rd}/5</strong> Rev</span><span class="pill">NCERT ${x.nc?'✓':'○'}</span><span class="pill">PYQ ${x.pyq?'✓':'○'}</span><span class="pill">Test ${x.test?'✓':'○'}</span></div><div class="chapter-progress"><i style="width:${p}%"></i></div></div>`;}).join('')||'<div class="card empty">No chapters match your filters. Use “+ Add Chapter” to create your own tracker.</div>';
+  document.querySelectorAll('#subjectSwitch button').forEach(btn=>{btn.classList.toggle('active',btn.dataset.subject===chapterSubjectView);btn.onclick=()=>setChapterSubject(btn.dataset.subject);});
+}
+
+function checkpointLabel(g){
+  const c=state.chapters[g.chapterId];
+  if(!c)return 'Batch';
+  if(g.kind==='lec')return `${c.n} • Lecture ${g.index+1}`;
+  if(g.kind==='dpp')return `${c.n} • DPP ${g.index+1}`;
+  if(g.kind==='rev')return `${c.n} • Revision ${g.index+1}`;
+  if(g.kind==='pyq')return `${c.n} • PYQ`;
+  return c.n;
+}
+function batchGoalDone(g){
+  const c=state.chapters[g.chapterId];
+  if(!c)return !!g.done;
+  if(g.kind==='lec')return !!(c._lecBoxes&&c._lecBoxes[g.index]);
+  if(g.kind==='dpp')return !!(c._dppBoxes&&c._dppBoxes[g.index]);
+  if(g.kind==='rev')return !!(c.revDone&&c.revDone[g.index]);
+  if(g.kind==='pyq')return !!c.pyq;
+  return !!g.done;
+}
+function syncBatchGoal(g){
+  const c=state.chapters[g.chapterId];
+  if(!c)return;
+  const value=!batchGoalDone(g);
+  if(g.kind==='lec'){if(!Array.isArray(c._lecBoxes))c._lecBoxes=Array(c.lecTarget||0).fill(false);if(g.index<c._lecBoxes.length)c._lecBoxes[g.index]=value;c.lecDone=c._lecBoxes.filter(Boolean).length;}
+  if(g.kind==='dpp'){if(!Array.isArray(c._dppBoxes))c._dppBoxes=Array(c.dppTarget||0).fill(false);if(g.index<c._dppBoxes.length)c._dppBoxes[g.index]=value;c.dppDone=c._dppBoxes.filter(Boolean).length;}
+  if(g.kind==='rev'){if(!Array.isArray(c.revDone))c.revDone=[false,false,false,false,false];c.revDone[g.index]=value;}
+  if(g.kind==='pyq')c.pyq=value;
+  g.done=value;
+}
+function renderToday(){
+  const tasks=state.goals.filter(g=>g.date===dateKey());
+  tasks.forEach(g=>{if(g.type==='batch')g.done=batchGoalDone(g);});
+  document.getElementById('todayTasks').innerHTML=tasks.length
+    ? tasks.map(g=>{
+        const done=g.type==='batch'?batchGoalDone(g):!!g.done;
+        const label=g.type==='batch'?checkpointLabel(g):g.text;
+        const safe=String(label).replace(/</g,'&lt;');
+        return `<div class="task ${done?'done':''}">
+          <button class="check ${done?'done':''}" onclick="toggleGoal('${g.id}')">${done?'✓':''}</button>
+          <span>${safe}</span>
+          <span class="task-kind">${g.type==='batch'?'BATCH':'MY TASK'}</span>
+          <span class="tag task-delete" onclick="deleteGoal('${g.id}')" style="cursor:pointer">✕</span>
+        </div>`;
+      }).join('')
+    : '<div class="empty">No tasks for today. Add a batch task or your own task.</div>';
+}
+async function addBatchGoal(){
+  const chapters=allChapters();
+  if(!chapters.length){ await syncAlert('Create a batch chapter first.'); return; }
+
+  const subjects=['Physics','Chemistry','Biology'];
+  const subject=await openChoiceModal(
+    'Choose subject',
+    'Select the subject for your batch task.',
+    subjects.map((name,i)=>({value:name,label:name,icon:['⚡','⚗️','🧬'][i]}))
+  );
+  if(!subject)return;
+
+  const subjectChapters=chapters.filter(c=>c.s===subject);
+  if(!subjectChapters.length){ await syncAlert(`No ${subject} chapters have been added yet.`); return; }
+
+  const chapterChoice=await openChoiceModal(
+    `${subject} chapters`,
+    'Choose a chapter.',
+    subjectChapters.map(c=>({value:c.id,label:c.n,icon:subject==='Physics'?'⚡':subject==='Chemistry'?'⚗️':'🧬'}))
+  );
+  if(!chapterChoice)return;
+
+  const c=subjectChapters.find(x=>x.id===chapterChoice);
+  if(!c)return;
+
+  const choices=[];
+  for(let i=0;i<c.lecTarget;i++)if(!(c._lecBoxes?.[i]))choices.push({type:'lecture',index:i,label:`Lecture ${i+1}`,icon:'🎬'});
+  for(let i=0;i<c.dppTarget;i++)if(!(c._dppBoxes?.[i]))choices.push({type:'dpp',index:i,label:`DPP ${i+1}`,icon:'📝'});
+  c.revDone=(c.revDone||[false,false,false,false,false]);
+  c.revDone.forEach((done,i)=>{if(!done)choices.push({type:'revision',index:i,label:`Revision ${i+1}`,icon:'🔄'});});
+  if(!c.pyq)choices.push({type:'pyq',index:0,label:'PYQ',icon:'📚'});
+  if(!c.nc)choices.push({type:'nc',index:0,label:'NCERT',icon:'📖'});
+  if(!c.test)choices.push({type:'test',index:0,label:'Test',icon:'🧪'});
+
+  const linkedExists=(type,index)=>state.goals.some(g=>g.date===dateKey()&&g.batch&&g.cid===c.id&&g.type===type&&Number(g.index)===Number(index));
+  const available=choices.filter(x=>!linkedExists(x.type,x.index));
+  if(!available.length){ await syncAlert(`All available checkpoints for ${c.n} are already completed or added to today's To-Do.`); return; }
+
+  const checkpoint=await openChoiceModal(
+    c.n,
+    'Choose what you want to add to today’s To-Do.',
+    available.map(x=>({value:`${x.type}:${x.index}`,label:x.label,icon:x.icon}))
+  );
+  if(!checkpoint)return;
+
+  const [type,indexText]=checkpoint.split(':');
+  const index=Number(indexText);
+  const x=available.find(item=>item.type===type&&item.index===index);
+  if(!x)return;
+
+  state.goals.push({
+    id:uid(), text:`${subject} • ${c.n} — ${x.label}`, date:dateKey(), done:false,
+    batch:true, cid:c.id, type:x.type, index:x.index
+  });
+  save(); render();
+}
+
+function openChoiceModal(title,message,options){
+  return new Promise(resolve=>{
+    const modal=document.getElementById('syncModal');
+    const titleEl=document.getElementById('syncModalTitle');
+    const msgEl=document.getElementById('syncModalMessage');
+    const input=document.getElementById('syncModalInput');
+    const cancel=document.getElementById('syncModalCancel');
+    const ok=document.getElementById('syncModalOk');
+    if(!modal||!titleEl||!msgEl||!input||!cancel||!ok){ resolve(null); return; }
+
+    syncModalResolver=resolve;
+    syncModalMode='choice';
+    titleEl.textContent=title;
+    msgEl.textContent=message;
+    input.style.display='none';
+    ok.style.display='none';
+    cancel.style.display='inline-block';
+
+    const old=modal.querySelector('.sync-choice-list');
+    if(old)old.remove();
+
+    const list=document.createElement('div');
+    list.className='sync-choice-list';
+    options.forEach(opt=>{
+      const b=document.createElement('button');
+      b.type='button';
+      b.className='sync-choice-btn';
+      b.innerHTML=`<span class="sync-choice-icon">${opt.icon||'•'}</span><span>${escapeHtml(opt.label)}</span>`;
+      b.onclick=()=>{
+        modal.classList.remove('show'); list.remove();
+        const r=syncModalResolver; syncModalResolver=null; if(r)r(opt.value);
+      };
+      list.appendChild(b);
+    });
+    msgEl.after(list);
+    modal.classList.add('show');
+
+    cancel.onclick=()=>{
+      modal.classList.remove('show'); list.remove();
+      const r=syncModalResolver; syncModalResolver=null; if(r)r(null);
+    };
+  });
+}
+
+async function addCustomGoal(){
+  const t=await syncPrompt("What do you want to add to today's To-Do list?");
+  if(!t||!t.trim())return;
+  state.goals.push({id:'g_'+Date.now(),text:t.trim(),date:dateKey(),done:false,type:'custom',chapterId:null,kind:null,index:null});
+  save();render();
+}
+function addGoal(){addCustomGoal()}
+function toggleGoal(i){
+  const g=state.goals.find(x=>x.id===i);
+  if(!g)return;
+  if(g.type==='batch')syncBatchGoal(g);else g.done=!g.done;
+  save();render();
+}
+function editGoal(i,t){let g=state.goals.find(x=>x.id===i);if(g){g.text=t;save()}}
+function deleteGoal(i){state.goals=state.goals.filter(x=>x.id!==i);save();render()}
+function nextAction(){let priority=allChapters().map(c=>({...c,p:chapterPct(state.chapters[c.id])})).filter(x=>x.p<100).sort((a,b)=>a.p-b.p)[0];if(priority){document.getElementById('nextAction').textContent=priority.s+' — '+priority.n;document.getElementById('nextReason').textContent='Finish the next lecture/DPP checkpoint, then NCERT → PYQ → revision → test.';document.getElementById('timerSuggestion').textContent=priority.n+' • '+priority.s}}
+function escapeAiHtml(v){
+  return String(v).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+function aiMarkdown(v){
+  let x=escapeAiHtml(v);
+  x=x.replace(/```([\s\S]*?)```/g,'<pre>$1</pre>');
+  x=x.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>');
+  x=x.replace(/`([^`]+)`/g,'<code>$1</code>');
+  x=x.replace(/\n/g,'<br>');
+  return x;
+}
+function setAiStatus(text,state='ready'){
+  const el=document.getElementById('aiStatus'),dot=document.querySelector('.ai-dot');
+  if(el)el.textContent=text;
+  if(dot)dot.className='ai-dot '+(state==='busy'?'busy':state==='error'?'error':'');
+}
+function useAiPrompt(text){
+  const inp=document.getElementById('ask');
+  if(!inp)return;
+  inp.value=text;
+  inp.focus();
+  askCoach();
+}
+function handleAiKey(e){
+  if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();askCoach();}
+}
+function aiStudyContext(){
+  const chapters=allChapters().map(c=>{
+    const ch=state.chapters[c.id];
+    return {
+      subject:c.s,name:c.n,progress:chapterPct(ch),
+      lectures:{planned:ch.lecTarget||0,completed:(ch._lecBoxes||[]).filter(Boolean).length},
+      dpp:{planned:ch.dppTarget||0,completed:(ch._dppBoxes||[]).filter(Boolean).length},
+      revision:(ch.revDone||[]).filter(Boolean).length,
+      ncert:!!ch.nc,pyq:!!ch.pyq,test:!!ch.test,locked:!!ch.locked
+    };
+  });
+  return {
+    today:dateKey(),
+    studyMinutesToday:loggedToday(),
+    overallProgress:overall(),
+    subjectProgress:{
+      Physics:subjectPct('Physics'),
+      Chemistry:subjectPct('Chemistry'),
+      Biology:subjectPct('Biology')
+    },
+    chapters,
+    todayTasks:state.goals.filter(g=>g.date===dateKey()).map(g=>({text:g.text,done:!!g.done,batch:!!g.batch}))
+  };
+}
+async function askCoach(){
+  const inp=document.getElementById('ask');
+  const q=inp.value.trim();
+  if(!q)return;
+  const box=document.getElementById('messages');
+  const send=document.getElementById('aiSendBtn');
+  const user=document.createElement('div');
+  user.className='bubble me';
+  user.innerHTML=aiMarkdown(q);
+  box.appendChild(user);
+  inp.value='';
+  inp.style.height='auto';
+  box.scrollTop=box.scrollHeight;
+
+  const thinking=document.createElement('div');
+  thinking.className='bubble ai-bubble';
+  thinking.innerHTML='Thinking…';
+  box.appendChild(thinking);
+  if(send)send.disabled=true;
+  setAiStatus('Thinking…','busy');
+
+  const history=[...box.querySelectorAll('.bubble')].slice(-12,-1).map(el=>({
+    role:el.classList.contains('me')?'user':'assistant',
+    content:el.textContent
+  }));
+
+  try{
+    const aiBase=(window.AndroidApp && typeof AndroidApp.getAiBackendUrl==='function')
+      ? AndroidApp.getAiBackendUrl()
+      : (window.SYNCAPSO_AI_URL || '');
+    const res=await fetch(aiBase.replace(/\/$/,'') + '/api/ai',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({message:q,history,studyContext:aiStudyContext()})
+    });
+    const data=await res.json().catch(()=>({}));
+    if(!res.ok)throw new Error(data.error||`AI request failed (${res.status})`);
+    thinking.innerHTML=aiMarkdown(data.reply||'I could not generate a response.');
+    setAiStatus('AI ready','ready');
+  }catch(err){
+    thinking.innerHTML='<strong>AI connection issue.</strong><br>'+escapeAiHtml(err.message)+'<br><br>Make sure SYNCAPSO is running through the included server and OPENAI_API_KEY is configured.';
+    setAiStatus('Connection issue','error');
+  }finally{
+    if(send)send.disabled=false;
+    box.scrollTop=box.scrollHeight;
+    inp.focus();
+  }
+}
+
+showPage('home',document.querySelector('.nav button'));
+render();
+setInterval(updateClock,1000);
+</script>
+</body></html>
