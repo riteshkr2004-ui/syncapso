@@ -15,7 +15,7 @@ class MainActivity : AppCompatActivity() {
 
     // Set this to the HTTPS URL where the included backend is deployed.
     // Example: https://api.your-domain.com
-    private val aiBackendUrl = "https://YOUR-SYNCAPSO-BACKEND.example.com"
+    private val aiBackendUrl = "https://syncapso.onrender.com"
 
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
