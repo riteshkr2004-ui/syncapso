@@ -13,14 +13,14 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
       - name: Unzip SYNCAPSO project
         run: |
           unzip -o SYNCAPSO_Android_AI_v1.zip -d syncapso_temp
-          cp -r syncapso_temp/. syncapso_temp_contents
-          find syncapso_temp -mindepth 1 -maxdepth 1 -exec cp -r {} . \;
+          rm -rf syncapso_temp/.github
+          cp -r syncapso_temp/. .
           rm -rf syncapso_temp
           rm -f SYNCAPSO_Android_AI_v1.zip
+      
 
       - name: Commit extracted project
         run: |
