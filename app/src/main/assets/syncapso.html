@@ -952,5 +952,963 @@ async function askCoach(){
 showPage('home',document.querySelector('.nav button'));
 render();
 setInterval(updateClock,1000);
+
+/* =========================
+   SYNCAPSO v2 FIX PATCH
+   ========================= */
+
+const SYNCAPSO_STATE_KEY = 'neetOS_v2';
+const SYNCAPSO_OLD_KEY = 'neetOS_v1';
+const SYNCAPSO_AI_KEY = 'syncapso_ai_history_v1';
+const SYNCAPSO_TIMER_KEY = 'syncapso_active_timer';
+
+/* ---------- Native storage ---------- */
+
+function nativeStorageGet(key){
+  try{
+    if(window.AndroidApp && typeof AndroidApp.getStorage==='function'){
+      const value=AndroidApp.getStorage(key);
+      return value || null;
+    }
+  }catch(e){}
+  return null;
+}
+
+function nativeStorageSet(key,value){
+  try{
+    if(window.AndroidApp && typeof AndroidApp.setStorage==='function'){
+      AndroidApp.setStorage(key,String(value));
+    }
+  }catch(e){}
+}
+
+function persistentGet(key){
+  const native=nativeStorageGet(key);
+  if(native!==null)return native;
+
+  try{
+    return localStorage.getItem(key);
+  }catch(e){
+    return null;
+  }
+}
+
+function persistentSet(key,value){
+  try{
+    localStorage.setItem(key,String(value));
+  }catch(e){}
+
+  nativeStorageSet(key,value);
+}
+
+/* ---------- State migration ---------- */
+
+(function migrateStateToNativeStorage(){
+  try{
+    let raw=persistentGet(SYNCAPSO_STATE_KEY);
+
+    if(!raw){
+      raw=persistentGet(SYNCAPSO_OLD_KEY);
+
+      if(raw){
+        persistentSet(SYNCAPSO_STATE_KEY,raw);
+      }
+    }
+
+    if(raw){
+      const parsed=JSON.parse(raw);
+
+      if(parsed && typeof parsed==='object'){
+        state=parsed;
+        normalizeState();
+      }
+    }
+
+    persistentSet(SYNCAPSO_STATE_KEY,JSON.stringify(state));
+  }catch(e){
+    console.warn('SYNCAPSO storage migration failed',e);
+  }
+})();
+
+/* Replace normal save with durable Android storage */
+
+save=function(){
+  try{
+    const raw=JSON.stringify(state);
+    persistentSet(SYNCAPSO_STATE_KEY,raw);
+  }catch(e){
+    console.warn('SYNCAPSO save failed',e);
+  }
+};
+
+/* ---------- Active timer persistence ---------- */
+
+function persistActiveTimer(){
+  try{
+    if(!homeTimerRunning){
+      persistentSet(SYNCAPSO_TIMER_KEY,'');
+      return;
+    }
+
+    persistentSet(
+      SYNCAPSO_TIMER_KEY,
+      JSON.stringify({
+        startedAt:homeTimerStartedAt,
+        savedAt:Date.now()
+      })
+    );
+  }catch(e){}
+}
+
+function recoverActiveTimer(){
+  try{
+    const raw=persistentGet(SYNCAPSO_TIMER_KEY);
+
+    if(!raw)return;
+
+    const data=JSON.parse(raw);
+    const started=Number(data.startedAt);
+
+    if(!Number.isFinite(started)||started<=0){
+      persistentSet(SYNCAPSO_TIMER_KEY,'');
+      return;
+    }
+
+    const elapsed=Math.max(
+      0,
+      Math.floor((Date.now()-started)/1000)
+    );
+
+    if(elapsed>0){
+      const today=dateKey();
+      state.logs[today]=(state.logs[today]||0)+(elapsed/60);
+      save();
+    }
+
+    persistentSet(SYNCAPSO_TIMER_KEY,'');
+  }catch(e){
+    persistentSet(SYNCAPSO_TIMER_KEY,'');
+  }
+}
+
+recoverActiveTimer();
+
+/* Replace timer controller */
+
+toggleHomeTimer=function(){
+  if(homeTimerRunning){
+
+    const elapsedSeconds=currentTimerSeconds();
+
+    homeTimerRunning=false;
+
+    clearInterval(homeTimerInterval);
+    homeTimerInterval=null;
+
+    homeTimerSeconds=0;
+
+    persistentSet(SYNCAPSO_TIMER_KEY,'');
+
+    recordStudyMinutes(elapsedSeconds/60);
+
+    drawHomeTimer();
+    renderHomeStudyTime();
+
+  }else{
+
+    homeTimerRunning=true;
+    homeTimerStartedAt=Date.now();
+    homeTimerSeconds=0;
+
+    persistActiveTimer();
+
+    clearInterval(homeTimerInterval);
+
+    homeTimerInterval=setInterval(()=>{
+      drawHomeTimer();
+      renderHomeStudyTime();
+      persistActiveTimer();
+    },250);
+
+    drawHomeTimer();
+    renderHomeStudyTime();
+  }
+};
+
+/* Keep the timer display alive even when other UI is idle */
+
+setInterval(()=>{
+  if(homeTimerRunning){
+    drawHomeTimer();
+    renderHomeStudyTime();
+  }
+},250);
+
+/* ---------- AI persistent history ---------- */
+
+let syncapsoAiHistory=[];
+
+function loadAiHistory(){
+  try{
+    const raw=persistentGet(SYNCAPSO_AI_KEY);
+
+    if(raw){
+      const parsed=JSON.parse(raw);
+
+      if(Array.isArray(parsed)){
+        syncapsoAiHistory=parsed.slice(-60);
+      }
+    }
+  }catch(e){
+    syncapsoAiHistory=[];
+  }
+}
+
+function saveAiHistory(){
+  try{
+    persistentSet(
+      SYNCAPSO_AI_KEY,
+      JSON.stringify(syncapsoAiHistory.slice(-60))
+    );
+  }catch(e){}
+}
+
+function renderAiHistory(){
+  const box=document.getElementById('messages');
+
+  if(!box)return;
+
+  if(!syncapsoAiHistory.length){
+    box.innerHTML=
+      '<div class="bubble ai-bubble">Hey 👋 I’m your SYNCAPSO AI Tutor. Ask me a doubt, give me a question, or ask what you should study next.</div>';
+    return;
+  }
+
+  box.innerHTML=syncapsoAiHistory.map(x=>{
+    return `<div class="bubble ${x.role==='user'?'me':'ai-bubble'}">${aiMarkdown(x.content||'')}</div>`;
+  }).join('');
+
+  box.scrollTop=box.scrollHeight;
+}
+
+function clearAiHistory(){
+  syncapsoAiHistory=[];
+  saveAiHistory();
+  renderAiHistory();
+}
+
+loadAiHistory();
+renderAiHistory();
+
+/* ---------- Batch task compatibility ---------- */
+
+function normalizeBatchGoal(g){
+  if(!g)return g;
+
+  const legacyMap={
+    lecture:'lec',
+    dpp:'dpp',
+    revision:'rev',
+    pyq:'pyq',
+    ncert:'nc',
+    test:'test',
+    nc:'nc'
+  };
+
+  g.chapterId=g.chapterId||g.cid||null;
+
+  g.kind=g.kind||legacyMap[g.type]||null;
+
+  if(g.batch || g.cid || g.chapterId){
+    g.batch=true;
+  }
+
+  if(
+    g.batch &&
+    ['lecture','dpp','revision','pyq','ncert','test','nc'].includes(g.type)
+  ){
+    g.type='batch';
+  }
+
+  return g;
+}
+
+state.goals.forEach(normalizeBatchGoal);
+
+save();
+
+/* Better batch checkpoint label */
+
+checkpointLabel=function(g){
+  normalizeBatchGoal(g);
+
+  const c=state.chapters[g.chapterId];
+
+  if(!c)return 'Batch';
+
+  if(g.kind==='lec')
+    return `${c.n} • Lecture ${Number(g.index)+1}`;
+
+  if(g.kind==='dpp')
+    return `${c.n} • DPP ${Number(g.index)+1}`;
+
+  if(g.kind==='rev')
+    return `${c.n} • Revision ${Number(g.index)+1}`;
+
+  if(g.kind==='pyq')
+    return `${c.n} • PYQ`;
+
+  if(g.kind==='nc')
+    return `${c.n} • NCERT`;
+
+  if(g.kind==='test')
+    return `${c.n} • Test`;
+
+  return c.n;
+};
+
+batchGoalDone=function(g){
+  normalizeBatchGoal(g);
+
+  const c=state.chapters[g.chapterId];
+
+  if(!c)return !!g.done;
+
+  if(g.kind==='lec')
+    return !!(c._lecBoxes && c._lecBoxes[g.index]);
+
+  if(g.kind==='dpp')
+    return !!(c._dppBoxes && c._dppBoxes[g.index]);
+
+  if(g.kind==='rev')
+    return !!(c.revDone && c.revDone[g.index]);
+
+  if(g.kind==='pyq')
+    return !!c.pyq;
+
+  if(g.kind==='nc')
+    return !!c.nc;
+
+  if(g.kind==='test')
+    return !!c.test;
+
+  return !!g.done;
+};
+
+syncBatchGoal=function(g){
+  normalizeBatchGoal(g);
+
+  const c=state.chapters[g.chapterId];
+
+  if(!c)return;
+
+  const value=!batchGoalDone(g);
+
+  if(g.kind==='lec'){
+    if(!Array.isArray(c._lecBoxes)){
+      c._lecBoxes=Array(c.lecTarget||0).fill(false);
+    }
+
+    if(g.index<c._lecBoxes.length){
+      c._lecBoxes[g.index]=value;
+    }
+
+    c.lecDone=c._lecBoxes.filter(Boolean).length;
+  }
+
+  if(g.kind==='dpp'){
+    if(!Array.isArray(c._dppBoxes)){
+      c._dppBoxes=Array(c.dppTarget||0).fill(false);
+    }
+
+    if(g.index<c._dppBoxes.length){
+      c._dppBoxes[g.index]=value;
+    }
+
+    c.dppDone=c._dppBoxes.filter(Boolean).length;
+  }
+
+  if(g.kind==='rev'){
+    if(!Array.isArray(c.revDone)){
+      c.revDone=[false,false,false,false,false];
+    }
+
+    c.revDone[g.index]=value;
+  }
+
+  if(g.kind==='pyq')c.pyq=value;
+  if(g.kind==='nc')c.nc=value;
+  if(g.kind==='test')c.test=value;
+
+  g.done=value;
+
+  save();
+};
+
+/* ---------- Replace batch task creator ---------- */
+
+addBatchGoal=async function(){
+
+  const chapters=allChapters();
+
+  if(!chapters.length){
+    await syncAlert('Create a batch chapter first.');
+    return;
+  }
+
+  const subjects=['Physics','Chemistry','Biology'];
+
+  const subject=await openChoiceModal(
+    'Choose subject',
+    'Select the subject for your batch task.',
+    subjects.map((name,i)=>({
+      value:name,
+      label:name,
+      icon:['⚡','⚗️','🧬'][i]
+    }))
+  );
+
+  if(!subject)return;
+
+  const subjectChapters=chapters.filter(c=>c.s===subject);
+
+  if(!subjectChapters.length){
+    await syncAlert(`No ${subject} chapters have been added yet.`);
+    return;
+  }
+
+  const chapterChoice=await openChoiceModal(
+    `${subject} chapters`,
+    'Choose a chapter.',
+    subjectChapters.map(c=>({
+      value:c.id,
+      label:c.n,
+      icon:subject==='Physics'
+        ?'⚡'
+        :subject==='Chemistry'
+        ?'⚗️'
+        :'🧬'
+    }))
+  );
+
+  if(!chapterChoice)return;
+
+  const c=state.chapters[chapterChoice];
+
+  if(!c)return;
+
+  if(!Array.isArray(c._lecBoxes))
+    c._lecBoxes=Array(c.lecTarget||0).fill(false);
+
+  if(!Array.isArray(c._dppBoxes))
+    c._dppBoxes=Array(c.dppTarget||0).fill(false);
+
+  if(!Array.isArray(c.revDone))
+    c.revDone=[false,false,false,false,false];
+
+  const choices=[];
+
+  for(let i=0;i<c.lecTarget;i++){
+    if(!c._lecBoxes[i]){
+      choices.push({
+        type:'lec',
+        index:i,
+        label:`Lecture ${i+1}`,
+        icon:'🎬'
+      });
+    }
+  }
+
+  for(let i=0;i<c.dppTarget;i++){
+    if(!c._dppBoxes[i]){
+      choices.push({
+        type:'dpp',
+        index:i,
+        label:`DPP ${i+1}`,
+        icon:'📝'
+      });
+    }
+  }
+
+  c.revDone.forEach((done,i)=>{
+    if(!done){
+      choices.push({
+        type:'rev',
+        index:i,
+        label:`Revision ${i+1}`,
+        icon:'🔄'
+      });
+    }
+  });
+
+  if(!c.nc)
+    choices.push({
+      type:'nc',
+      index:0,
+      label:'NCERT',
+      icon:'📖'
+    });
+
+  if(!c.pyq)
+    choices.push({
+      type:'pyq',
+      index:0,
+      label:'PYQ',
+      icon:'📚'
+    });
+
+  if(!c.test)
+    choices.push({
+      type:'test',
+      index:0,
+      label:'Test',
+      icon:'🧪'
+    });
+
+  const linkedExists=(kind,index)=>{
+    return state.goals.some(g=>{
+      normalizeBatchGoal(g);
+
+      return g.date===dateKey()
+        && g.batch
+        && g.chapterId===c.id
+        && g.kind===kind
+        && Number(g.index)===Number(index);
+    });
+  };
+
+  const available=choices.filter(
+    x=>!linkedExists(x.type,x.index)
+  );
+
+  if(!available.length){
+    await syncAlert(
+      `All available checkpoints for ${c.n} are already completed or added to today's To-Do.`
+    );
+    return;
+  }
+
+  const checkpoint=await openChoiceModal(
+    c.n,
+    'Choose what you want to add to today’s To-Do.',
+    available.map(x=>({
+      value:`${x.type}:${x.index}`,
+      label:x.label,
+      icon:x.icon
+    }))
+  );
+
+  if(!checkpoint)return;
+
+  const [kind,indexText]=checkpoint.split(':');
+  const index=Number(indexText);
+
+  const selected=available.find(
+    x=>x.type===kind && x.index===index
+  );
+
+  if(!selected)return;
+
+  state.goals.push({
+    id:uid(),
+    text:`${subject} • ${c.n} — ${selected.label}`,
+    date:dateKey(),
+    done:false,
+    batch:true,
+    chapterId:c.id,
+    kind:selected.type,
+    type:'batch',
+    index:selected.index
+  });
+
+  save();
+  render();
+};
+
+/* ---------- AI chat ---------- */
+
+askCoach=async function(){
+
+  const inp=document.getElementById('ask');
+  const q=inp.value.trim();
+
+  if(!q)return;
+
+  syncapsoAiHistory.push({
+    role:'user',
+    content:q,
+    at:Date.now()
+  });
+
+  saveAiHistory();
+  renderAiHistory();
+
+  inp.value='';
+  inp.style.height='auto';
+
+  const box=document.getElementById('messages');
+  const send=document.getElementById('aiSendBtn');
+
+  const thinking=document.createElement('div');
+
+  thinking.className='bubble ai-bubble';
+  thinking.innerHTML='Thinking…';
+
+  box.appendChild(thinking);
+  box.scrollTop=box.scrollHeight;
+
+  if(send)send.disabled=true;
+
+  setAiStatus('Thinking…','busy');
+
+  const history=syncapsoAiHistory
+    .slice(-11,-1)
+    .map(x=>({
+      role:x.role,
+      content:x.content
+    }));
+
+  try{
+
+    const aiBase=
+      (window.AndroidApp &&
+       typeof AndroidApp.getAiBackendUrl==='function')
+      ? AndroidApp.getAiBackendUrl()
+      : (window.SYNCAPSO_AI_URL||'');
+
+    const res=await fetch(
+      aiBase.replace(/\/$/,'')+'/api/ai',
+      {
+        method:'POST',
+        headers:{
+          'Content-Type':'application/json'
+        },
+        body:JSON.stringify({
+          message:q,
+          history,
+          studyContext:aiStudyContext()
+        })
+      }
+    );
+
+    const data=await res.json().catch(()=>({}));
+
+    if(!res.ok){
+      throw new Error(
+        data.error||`AI request failed (${res.status})`
+      );
+    }
+
+    const reply=data.reply||
+      'I could not generate a response.';
+
+    thinking.remove();
+
+    syncapsoAiHistory.push({
+      role:'assistant',
+      content:reply,
+      at:Date.now()
+    });
+
+    saveAiHistory();
+    renderAiHistory();
+
+    setAiStatus('AI ready','ready');
+
+  }catch(err){
+
+    thinking.innerHTML=
+      '<strong>AI connection issue.</strong><br>'+
+      escapeAiHtml(err.message)+
+      '<br><br>Check your internet connection and SYNCAPSO AI server.';
+
+    setAiStatus('Connection issue','error');
+
+  }finally{
+
+    if(send)send.disabled=false;
+
+    box.scrollTop=box.scrollHeight;
+
+    inp.focus();
+  }
+};
+
+/* ---------- Durable app lifecycle ---------- */
+
+window.syncapsoPersist=function(){
+
+  save();
+  persistActiveTimer();
+  saveAiHistory();
+
+};
+
+/* ---------- Mobile-first polish ---------- */
+
+(function addMobilePolish(){
+
+  const style=document.createElement('style');
+
+  style.textContent=`
+
+    @media(max-width:600px){
+
+      body{
+        overflow-x:hidden;
+        font-size:14px;
+      }
+
+      .main{
+        width:100%;
+        padding:14px 12px 88px;
+      }
+
+      .card{
+        border-radius:15px;
+        padding:14px;
+      }
+
+      .title{
+        font-size:22px;
+        line-height:1.15;
+      }
+
+      .sub{
+        font-size:12px;
+        line-height:1.4;
+      }
+
+      .top{
+        margin-bottom:12px;
+      }
+
+      .g2,
+      .g3,
+      .g4{
+        grid-template-columns:1fr;
+        gap:10px;
+      }
+
+      .timer-simple{
+        padding:14px;
+      }
+
+      .timer-simple-right{
+        width:100%;
+        gap:8px;
+        flex-wrap:wrap;
+      }
+
+      .timer-simple-time{
+        width:100%;
+        font-size:30px;
+      }
+
+      .timer-simple-right .btn{
+        flex:1;
+        min-height:44px;
+      }
+
+      .todo-actions{
+        width:100%;
+      }
+
+      .todo-actions .btn{
+        flex:1;
+        min-height:42px;
+      }
+
+      .task{
+        gap:8px;
+        padding:12px 0;
+      }
+
+      .task>span:nth-child(2){
+        flex:1;
+        min-width:0;
+        line-height:1.35;
+      }
+
+      .task-kind{
+        display:none;
+      }
+
+      .subject-switch{
+        display:grid;
+        grid-template-columns:repeat(3,1fr);
+        width:100%;
+        gap:6px;
+      }
+
+      .subject-switch button{
+        padding:10px 5px;
+        font-size:11px;
+      }
+
+      .toolbar{
+        display:grid;
+        gap:8px;
+      }
+
+      .toolbar .input,
+      .toolbar .select{
+        width:100%;
+        min-height:44px;
+      }
+
+      .chapter-head{
+        padding:14px;
+        gap:10px;
+      }
+
+      .chapter-icon{
+        width:40px;
+        height:40px;
+        flex:none;
+      }
+
+      .chapter-title{
+        font-size:14px;
+        line-height:1.25;
+      }
+
+      .chapter-stats{
+        padding:0 14px 13px;
+        gap:5px;
+      }
+
+      .pill{
+        font-size:9px;
+        padding:5px 7px;
+      }
+
+      .detail-top{
+        gap:9px;
+      }
+
+      .detail-title{
+        font-size:19px;
+      }
+
+      .detail-actions{
+        width:100%;
+        display:grid;
+        grid-template-columns:1fr 1fr;
+      }
+
+      .detail-actions .btn,
+      .detail-actions .lock-btn{
+        width:100%;
+        min-height:44px;
+      }
+
+      .track-box{
+        width:40px;
+        height:40px;
+      }
+
+      .weekday-row,
+      .study-calendar{
+        gap:4px;
+      }
+
+      .day-cell{
+        min-height:55px;
+        padding:5px;
+        border-radius:8px;
+      }
+
+      .history-row{
+        grid-template-columns:68px 1fr auto;
+        gap:7px;
+        font-size:11px;
+      }
+
+      .ai-intro{
+        align-items:flex-start;
+      }
+
+      .ai-intro .sub{
+        display:none;
+      }
+
+      .ai-chips{
+        overflow-x:auto;
+        flex-wrap:nowrap;
+        padding-bottom:4px;
+      }
+
+      .ai-chip{
+        white-space:nowrap;
+        min-height:38px;
+      }
+
+      .ai-assistant{
+        min-height:0;
+      }
+
+      .messages{
+        min-height:300px;
+        max-height:calc(100dvh - 390px);
+        overflow-y:auto;
+      }
+
+      .bubble{
+        max-width:94%;
+        font-size:13px;
+        padding:10px 11px;
+      }
+
+      .ai-ask{
+        position:sticky;
+        bottom:70px;
+        padding-top:10px;
+        background:linear-gradient(
+          180deg,
+          transparent,
+          #0b0e14 35%
+        );
+      }
+
+      .ai-input{
+        min-height:46px;
+        font-size:14px;
+      }
+
+      .ai-send{
+        min-width:68px;
+        height:46px;
+      }
+
+      .nav button{
+        padding:8px 3px;
+        font-size:10px;
+      }
+
+      .nav{
+        gap:2px;
+      }
+
+      .side{
+        height:64px;
+      }
+
+    }
+
+  `;
+
+  document.head.appendChild(style);
+
+})();
+
+/* Save everything once after patch installation */
+
+save();
+saveAiHistory();
+render();
+drawHomeTimer();
+renderHomeStudyTime();
+
 </script>
 </body></html>
